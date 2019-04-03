@@ -5,6 +5,7 @@
 # folders
 workspaces/*
 data/*
+output/*
 
 # Example code in package build process
 *-Ex.R
