@@ -80,45 +80,61 @@ if (!cluster) {
 
 # ---------  csv number of nests per year since 2000  ---------
 
-dt <- fread(file.path(datawd, "curlew_nrs_totals_2019.csv")) %>% setnames(names(.), c("year", "N"))
+dt <- fread(file.path(datawd, "curlew_nrs_totals_1939-2018.csv")) %>% setnames(names(.), c("year", "N"))
 
 
-# ---------  dv curlew file  ---------
-
-dvfile <- fread(file.path(datawd, "readme dv file.csv")) # derived from X:\Nest Records Unit\NRS\4 NRS output file spec\2 DV and ND file formats column start and end read in points
-
-dt_dv <- read.fwf(file.path(datawd, "curlenew.dv"), widths=(dvfile$End-dvfile$Start+1), col.names=dvfile$Variable) %>% data.table # read in fixed width Fortran output file
-
-
-#============================ Clean data ===================================
+# # ---------  dv curlew file  ---------
+# 
+# dvfile <- fread(file.path(datawd, "readme dv file.csv")) # derived from X:\Nest Records Unit\NRS\4 NRS output file spec\2 DV and ND file formats column start and end read in points
+# 
+# dt_dv <- read.fwf(file.path(datawd, "curlenew.dv"), widths=(dvfile$End-dvfile$Start+1), col.names=dvfile$Variable) %>% data.table # read in fixed width Fortran output file
 
 
-#-------   1. Generate FEG  &  & table of -------
-
-#   FEGDIF=MAXFEG-MINFEG;
-#   FEGMID=MINFEG + (FEGDIF/2);
-#   FEGMID=ROUND(FEGMID,1);
-#   IF IERROR NE 0 THEN DELETE;
-#   IF FEGDIF > 10 THEN DELETE;
-
-dt_dv$FEGDIF <- dt_dv$MAXFEG - dt_dv$MINFEG
-dt_dv$FEGMID <- round(dt_dv$MINFEG + dt_dv$FEGDIF/2)
-
-sum_nests_pre_2000 <- dt_dv[,.N, IYEA] %>% setnames(names(.), c("year", "N")) %>% .[order(year),] %>% .[year < 2000,]
+# #============================ Clean data ===================================
+# 
+# 
+# #-------   1. Generate FEG  &  & table of -------
+# 
+# #   FEGDIF=MAXFEG-MINFEG;
+# #   FEGMID=MINFEG + (FEGDIF/2);
+# #   FEGMID=ROUND(FEGMID,1);
+# #   IF IERROR NE 0 THEN DELETE;
+# #   IF FEGDIF > 10 THEN DELETE;
+# 
+# dt_dv$FEGDIF <- dt_dv$MAXFEG - dt_dv$MINFEG
+# dt_dv$FEGMID <- round(dt_dv$MINFEG + dt_dv$FEGDIF/2)
+# 
+# sum_nests_pre_2000 <- dt_dv[,.N, IYEA] %>% setnames(names(.), c("year", "N")) %>% .[order(year),] %>% .[year < 2000,]
 
 #============================ Plot pre- and post-2000 data  ===================================
 
-dt_all <- rbind(sum_nests_pre_2000, dt)
+# dt_all <- rbind(sum_nests_pre_2000, dt)
+dt_all <- dt
 
 if (!dir.exists(file.path(outputwd, "figures"))) dir.create(file.path(outputwd, "figures"))
+
+bto_logo <- png::readPNG(file.path(projectwd, "media", "bto_logo_landscape_transparent.png"))
+nrs_logo <- png::readPNG(file.path(projectwd, "media", "nrs_logo_transparent.png"))
+curlew_png <- png::readPNG(file.path(projectwd, "media", "inkscape_curlew_he.png"))
+
+
+bto_rast <- grid::rasterGrob(bto_logo, interpolate=TRUE)
+nrs_rast <- grid::rasterGrob(nrs_logo, interpolate = TRUE)
+curlew_rast <- grid::rasterGrob(curlew_png, interpolate = TRUE)
 
 ggplot(dt_all, aes(year, N)) + 
   geom_point(colour="cyan4", size=3) + 
   geom_line(colour="cyan4") + 
   geom_vline(xintercept=2001, linetype=2, colour="grey20") +
-  labs(x = "Year", y = "Total no. of nests", title="Number of curlew nests submitted to the BTO Nest Record Scheme per year") +
-  scale_x_continuous(breaks = seq(1940, 2020, 5)) +
+  labs(x = "Year", y = "Total no. of nests", title="Number of curlew nests submitted to the BTO Nest Record Scheme") +
+  scale_x_continuous(breaks = seq(1935, 2020, 5)) +
   scale_y_continuous(breaks = seq(0, 150, 20)) +
-  theme_bw()
+  theme_bw() +
+  annotation_custom(bto_rast, ymin=100, ymax=135, xmin=1936, xmax=1948) +
+  annotation_custom(nrs_rast, ymin=75, ymax=110, xmin=1936, xmax=1943) +
+  # annotation_custom(curlew_rast, ymin=60, ymax=110, xmin=2002, xmax=2017) +
+  annotate("text", x=2001.5, y=121, hjust=0, vjust=0, label="Foot & mouth outbreak in 2001", size=3) +
+  annotate("text", x=2001.5, y=115, hjust=0, vjust=1, label="Drop in number of nests due to\nreduced volunteer activity", size=2.75)
+  
 ggsave(file.path(outputwd, "figures", "curlew_nrs_annual_totals_2018.png"), device="png", width=25, height=12, units="cm")
 
