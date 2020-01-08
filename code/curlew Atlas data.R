@@ -19,6 +19,7 @@ library(data.table)
 library(devtools)
 library(birdatlas)
 library(tidyverse)
+library(sf)
 library(foreign)
 
 
@@ -73,20 +74,20 @@ library(birdatlas)
 # source(paste(parentwd, "Git/atlas_core_functions/include_all_functions.R", sep="/"), chdir=TRUE)
 
 
-# ======================== TTV EFFORT ==========================
-
-# # load details of TTVs surveyed and create a tetrad column with tenkm and tetlet
-# allttv <- load.ttv.details()
-# allttv$tetrad <- paste(allttv$tenkm, allttv$tetlet, sep="")
-# allttv$month <- month(allttv$obsdt)
-# allttv.breedseason <- filter(allttv, month >= 4 & month <= 7)
-
-# load shapefile of Brecks tetrads that are desired
-# Brecks tetrad shapefile created based on selecting all tetrads in a rectangular grid + 1 that overlap with the Breckland SPA
-GB2kmBrecks <- readOGR(paste(parentwd, "GIS/projects/curlew", sep="/"), "GB002km_Brecks")
-GB2kmBrecks@data$ttv_surveyed <- ifelse(GB2kmBrecks@data$TETRAD %in% allttv.breedseason$tetrad, 1, 0)
-GB2kmBrecks.surveyed <- subset(GB2kmBrecks, ttv_surveyed==1)
-writeOGR(GB2kmBrecks.surveyed, outputwd, layer="ttv effort Brecks", driver="ESRI Shapefile")
+# # ======================== TTV EFFORT ==========================
+# 
+# # # load details of TTVs surveyed and create a tetrad column with tenkm and tetlet
+# # allttv <- load.ttv.details()
+# # allttv$tetrad <- paste(allttv$tenkm, allttv$tetlet, sep="")
+# # allttv$month <- month(allttv$obsdt)
+# # allttv.breedseason <- filter(allttv, month >= 4 & month <= 7)
+# 
+# # load shapefile of Brecks tetrads that are desired
+# # Brecks tetrad shapefile created based on selecting all tetrads in a rectangular grid + 1 that overlap with the Breckland SPA
+# GB2kmBrecks <- readOGR(paste(parentwd, "GIS/projects/curlew", sep="/"), "GB002km_Brecks")
+# GB2kmBrecks@data$ttv_surveyed <- ifelse(GB2kmBrecks@data$TETRAD %in% allttv.breedseason$tetrad, 1, 0)
+# GB2kmBrecks.surveyed <- subset(GB2kmBrecks, ttv_surveyed==1)
+# writeOGR(GB2kmBrecks.surveyed, outputwd, layer="ttv effort Brecks", driver="ESRI Shapefile")
 
 
 # =========================   LOAD & MANIPULATE DATA   ========================
@@ -98,20 +99,31 @@ writeOGR(GB2kmBrecks.surveyed, outputwd, layer="ttv effort Brecks", driver="ESRI
 # BTC = casual Bird Track records
 # BTL = Bird Track list
 
-# load entire raw 2010 Atlas dataset
-# convert to data.table and rm/gc dataframe
-dat_all <- load_raw_data_2010()
-dt_all <- dat_all %>% as.data.table(.)
-rm(dat_all)
-gc()
+# # ---------------  Load entire Atlas dataset, and subset & save CU only  ------------
+# 
+# # load entire raw 2010 Atlas dataset
+# # convert to data.table and rm/gc dataframe
+# dat_all <- load_raw_data_2010()
+# dt_all <- dat_all %>% as.data.table(.)
+# rm(dat_all)
+# gc()
+# 
+# # # read in Atlas CU data which was extracted by Lucy
+# # dat0 <- read.csv(paste(datawd, "tetrad_raw_data_for_CU_Brecks.csv", sep="/"), header=TRUE)
+# 
+# # subset to CU only, remove unnecessary columns and create tetrad field
+# dt_CU <- dt_all[speccode == 203,]
+# dt_CU[, user_id := NULL]
+# dt_CU[, tetrad := paste0(tenkm, tetlet)]
+# 
+# # save dt_CU as its own dataset
+# saveRDS(dt_CU, file.path(datawd, "all_atlas_2010_curlew.rds"))
 
-# # read in Atlas CU data which was extracted by Lucy
-# dat0 <- read.csv(paste(datawd, "tetrad_raw_data_for_CU_Brecks.csv", sep="/"), header=TRUE)
 
-# subset to CU only, remove unnecessary columns and create tetrad field
-dt_CU <- dt_all[speccode == 203,]
-dt_CU[, user_id := NULL]
-dt_CU[, tetrad := paste0(tenkm, tetlet)]
+# ---------------  Load all CU Atlas dataset, subset to study tetrads  ------------
+
+# load RDS of dt_CU
+dt_CU <- readRDS(file.path(datawd, "all_atlas_2010_curlew.rds"))
 
 # load Breckland study area tetrads from GB002 shapefile
 brecks_tetrads <- foreign::read.dbf(file.path(parentwd, "GIS/projects/curlew", "GB002km_Brecks.dbf")) %>% as.data.table
@@ -131,7 +143,6 @@ wildsands_tetrads[, area := "wild sands"]
 # combine Brecks / Wild Sands into single 'study area' object list of tetrads
 study_tetrads <- list(brecks_tetrads, wildsands_tetrads) %>% rbindlist
 
-
 # subset dt_CU by study areas, remove any tetrads with NA for speccode, select only April through July, Breeding season records, and category possible, probable and confirmed breeding
 dt_CU_study_tetrads <- dt_CU[study_tetrads, on = "tetrad"][!is.na(speccode), ][obsmonth >= 4 & obsmonth <= 7,][season =="B" & cat %in% c(1, 2, 3),]
 
@@ -142,40 +153,37 @@ colnames(tetrad_cat) <- c("possible","probable","confirmed")
 # create new dataset with tetrad and numbers of instances of each breeding category status in each tetrad
 tetrad_cat <- dt_CU_study_tetrads[,.N, .(tetrad, cat)] %>% dcast(., tetrad ~ cat, value.var = "N")
 setnames(tetrad_cat, c("tetrad", "1", "2", "3"), c("tetrad", "possible", "probable", "confirmed"))
-tetrad_cat[, breedevidence := ifelse(confirmed >= 1, "confirmed", 
-                                     ifelse(probable >= 1, "probable", "possible")
-                                     )]
-
-#####################################
-#####################################
-#####################################
-#####################################
-#####################################
-
-
-
-
-
-
-tetrad_cat2 <- as.data.table(tetrad_cat)
-  data.frame(tetrad=levels(dat1$tetrad), possible=tetrad.cat[,"possible"], probably=tetrad.cat[,"probable"], confirmed=tetrad.cat[,"confirmed"])
-rownames(tetrad.cat2) <- 1:nrow(tetrad.cat2)
 
 # create a new variable showing highest breeding evidence for a tetrad over the course of the Atlas (can be from any type of Atlas record, TTV1, TTV2, roving record or Bird Track evidence, in any year)
-tetrad.cat2$breedevidence <- with(tetrad.cat2, ifelse(confirmed >= 1, "confirmed", ifelse(probably >= 1, "probable", "possible")))
+tetrad_cat[, breedevidence := ifelse(!is.na(confirmed), "confirmed", 
+                                     ifelse(!is.na(probable), "probable", "possible")
+                                     )]
 
-# Load GB tetrad grid and subset by tetrads which are in Brecks CU dataset and add breeding code status to shapefile attribute table
-GB2kmgrid <- readOGR(paste(parentwd, "GIS/British Isles/National Grids/GB", sep="/"), "GB002kmgrid")
-GB2kmgrid.sub <- subset(GB2kmgrid, GB2kmgrid$TETRAD %in% levels(tetrad.cat2$tetrad))
+# add study area to dataset of tetrads and highest breeding status
+study_tetrad_area_lookup <- dt_CU_study_tetrads[,.N, .(tetrad, area)][, .(tetrad, area)]
+tetrad_cat[study_tetrad_area_lookup, area := i.area]
 
-GB2kmgrid.sub@data <- rename(GB2kmgrid.sub@data, tetrad=TETRAD)
-GB2kmgrid.sub@data <- merge(GB2kmgrid.sub@data, tetrad.cat2, by="tetrad")
 
-# write shapefile
-writeOGR(GB2kmgrid.sub, outputwd, layer="CU tetrads_breeding evidence", driver="ESRI Shapefile")
+# ---------------  Write breeding evidence status to shapefile attribute table  ------------
 
-# # turn raw curlew data (not summarised by tetrad across the whole Atlas period) into a shapefile
-# GB2kmgrid.sub <- subset(GB2kmgrid, GB2kmgrid$TETRAD %in% levels(dat1$tetrad))
-# 
-# GB2kmgrid.sub@data <- rename(GB2kmgrid.sub@data, tetrad=TETRAD)
-# GB2kmgrid.sub@data <- merge(GB2kmgrid.sub@data, dat1, by="tetrad")
+# Merge breeding evidence status dt to Brecks and Wild Sands shapefile attribute table
+GB2kmBrecks <- st_read(file.path(parentwd, "GIS/projects/curlew/GB002km_Brecks.shp"), stringsAsFactors = FALSE) %>% select(., tetrad = TETRAD)
+GB2kmBrecks_CU <- GB2kmBrecks %>% 
+  merge(., tetrad_cat[area == "brecks",], by = "tetrad")
+st_write(GB2kmBrecks_CU, 
+         dsn = file.path(outputwd, "shapefiles"),
+         layer = "CU_tetrads_breeding_evidence_Brecks",
+         driver = "ESRI Shapefile",
+         update = TRUE)
+
+
+GB2kmWildSands <- st_read(file.path(parentwd, "GIS/projects/curlew/GB002km_WildSands.shp"), stringsAsFactors = FALSE) %>% select(., tetrad = TETRAD)
+GB2kmWildSands_CU <- GB2kmWildSands %>% 
+  merge(., tetrad_cat[area == "wild sands",], by = "tetrad")
+st_write(GB2kmWildSands_CU, 
+         dsn = file.path(outputwd, "shapefiles"),
+         layer = "CU_tetrads_breeding_evidence_WildSands",
+         driver = "ESRI Shapefile",
+         update = TRUE)
+
+
