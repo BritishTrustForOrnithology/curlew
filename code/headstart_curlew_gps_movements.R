@@ -44,10 +44,10 @@ source(file.path("code/source_setup_code_rproj.R"))
 
 today_date <- Sys.Date()
 
-file_format <- "mp4"
-map_service <- "osm"
-map_style <- "terrain"
-confidential <- TRUE
+file_format <- "mp4"   # various formats available in MoveVis package, if you've got a long animation, gif file size is huge, mp4s are much smaller
+map_service <- "osm"   # choose which map service, I've used osm and mapbox (satellite imagery)
+map_style <- "terrain" # choose map style (terrain vs satellite)
+confidential <- TRUE   # strips lat/lon axis labels from map
 
 tag_list <- c("203287")
 
@@ -55,7 +55,7 @@ for (tag in tag_list) {
   
   if (tag %in% c("203287")) {
     site <- "Ken Hill"
-    fix_rate <- 60
+    fix_rate <- 60     # controls downsampling of data, in minutes. Could set to 15 if you have high res data, but trade off in terms of rendering time
   }
   
   if (tag %in% c("203285")) {
