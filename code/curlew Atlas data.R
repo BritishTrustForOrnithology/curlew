@@ -66,7 +66,7 @@ options(digits=6)
 
 # # uses the birdatlas package on Github:
 # # https://github.com/BritishTrustForOrnithology/birdatlas
-# devtools::install_github('BritishTrustForOrnithology/birdatlas', build_vignettes = TRUE)
+# remotes::install_github("BritishTrustForOrnithology/birdatlas", auth_token = "42e2d1d35aa57a58fecc5715773fb994b707f6b4", quiet = FALSE)
 
 library(birdatlas)
 
@@ -133,10 +133,17 @@ setnames(brecks_tetrads, "TETRAD", "tetrad")
 brecks_tetrads[, area := "brecks"]
 
 
-# load Wild Sands study area tetrads from GB002 shapefile
-wildsands_tetrads <- foreign::read.dbf(file.path(parentwd, "GIS/projects/curlew", "GB002km_WildSands.dbf")) %>% as.data.table
+# # load Wild Sands study area tetrads from GB002 shapefile
+# wildsands_tetrads <- foreign::read.dbf(file.path(parentwd, "GIS/projects/curlew", "GB002km_WildSands.dbf")) %>% as.data.table
+# wildsands_tetrads[, `:=` (FID_1 = NULL,
+#                        LAND = NULL)]
+# setnames(wildsands_tetrads, "TETRAD", "tetrad")
+# wildsands_tetrads[, area := "wild sands"]
+
+# load Wild Sands EXTENDED study area tetrads from GB002 shapefile
+wildsands_tetrads <- foreign::read.dbf(file.path(parentwd, "GIS/projects/curlew", "GB002km_WildSands_extended.dbf")) %>% as.data.table
 wildsands_tetrads[, `:=` (FID_1 = NULL,
-                       LAND = NULL)]
+                          LAND = NULL)]
 setnames(wildsands_tetrads, "TETRAD", "tetrad")
 wildsands_tetrads[, area := "wild sands"]
 
@@ -177,12 +184,12 @@ st_write(GB2kmBrecks_CU,
          update = TRUE)
 
 
-GB2kmWildSands <- st_read(file.path(parentwd, "GIS/projects/curlew/GB002km_WildSands.shp"), stringsAsFactors = FALSE) %>% select(., tetrad = TETRAD)
+GB2kmWildSands <- st_read(file.path(parentwd, "GIS/projects/curlew/GB002km_WildSands_extended.shp"), stringsAsFactors = FALSE) %>% select(., tetrad = TETRAD)
 GB2kmWildSands_CU <- GB2kmWildSands %>% 
   merge(., tetrad_cat[area == "wild sands",], by = "tetrad")
 st_write(GB2kmWildSands_CU, 
          dsn = file.path(outputwd, "shapefiles"),
-         layer = "CU_tetrads_breeding_evidence_WildSands",
+         layer = "CU_tetrads_breeding_evidence_WildSands_extended",
          driver = "ESRI Shapefile",
          update = TRUE)
 
