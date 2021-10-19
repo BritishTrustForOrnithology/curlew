@@ -96,7 +96,7 @@ for (tag in tag_list) {
                        tail_size = 1.2,
                        trace_show = TRUE,
                        trace_colour = "orange",
-                       equidistant = TRUE
+                       equidistant = FALSE
         )  %>% 
         add_gg(gg = expr(list(
           theme(
@@ -121,7 +121,7 @@ for (tag in tag_list) {
                          tail_size = 1.2,
                          trace_show = TRUE,
                          trace_colour = "orange",
-                         equidistant = TRUE
+                         equidistant = FALSE
           ) %>% 
           add_gg(gg = expr(list(
             theme(axis.text = element_blank(),
@@ -145,7 +145,7 @@ for (tag in tag_list) {
                          tail_size = 1.2,
                          trace_show = TRUE,
                          trace_colour = "orange",
-                         equidistant = TRUE
+                         equidistant = FALSE
           ) %>%
           add_gg(gg = expr(list(
             theme(
