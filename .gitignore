@@ -4,7 +4,9 @@
 
 # folders
 workspaces/*
-data/*
+data/tracking_data
+data/nrs_data
+data/atlas_data
 output/*
 media/*
 
