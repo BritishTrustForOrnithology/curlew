@@ -63,7 +63,7 @@ for (tag in tag_list) {
   
   # load data, convert datetimes
   
-  bird_df <- read.csv(file.path(datawd, grep(tag, dir(datawd), value=TRUE)), header=TRUE, stringsAsFactors = FALSE)[, 1:22]
+  bird_df <- read.csv(file.path(datawd, "tracking_data", grep(tag, dir(datawd), value=TRUE)), header=TRUE, stringsAsFactors = FALSE)[, 1:22]
   bird_df$new_datetime <- as.POSIXct(strptime(paste(bird_df$UTC_date, bird_df$UTC_time), format = "%Y-%m-%d %H:%M:%S", tz="UTC"))
   
   # Subset to season
