@@ -126,15 +126,15 @@ ggplot(dt_all, aes(year, N)) +
   geom_point(colour="cyan4", size=3) + 
   geom_line(colour="cyan4") + 
   geom_vline(xintercept=2001, linetype=2, colour="grey20") +
-  labs(x = "Year", y = "Total no. of nests", title="Number of curlew nests submitted to the BTO Nest Record Scheme") +
+  labs(x = "Year", y = "Total no. of nests", title="Number of curlew nests submitted to the Nest Record Scheme") +
   scale_x_continuous(breaks = seq(1935, 2020, 5)) +
   scale_y_continuous(breaks = seq(0, 150, 20)) +
   theme_bw() +
-  annotation_custom(bto_rast, ymin=100, ymax=135, xmin=1936, xmax=1948) +
-  annotation_custom(nrs_rast, ymin=75, ymax=110, xmin=1936, xmax=1943) +
+  annotation_custom(bto_rast, ymin=100, ymax=135, xmin=1940, xmax=1960) +
+  annotation_custom(nrs_rast, ymin=75, ymax=110, xmin=1940, xmax=1955) +
   # annotation_custom(curlew_rast, ymin=60, ymax=110, xmin=2002, xmax=2017) +
-  annotate("text", x=2001.5, y=121, hjust=0, vjust=0, label="Foot & mouth outbreak in 2001", size=3) +
-  annotate("text", x=2001.5, y=115, hjust=0, vjust=1, label="Drop in number of nests due to\nreduced volunteer activity", size=2.75)
+  annotate("text", x=2002, y=121, hjust=0, vjust=0, label="2001 foot & mouth\noutbreak", size=4)
+  # annotate("text", x=2001.5, y=115, hjust=0, vjust=1, label="Drop in number of nests due to\nreduced volunteer activity", size=3.5)
   
-ggsave(file.path(outputwd, "figures", "curlew_nrs_annual_totals_2018.png"), device="png", width=25, height=12, units="cm")
+ggsave(file.path(outputwd, "figures", "curlew_nrs_annual_totals_2018.png"), device="png", width=18, height=18, units="cm")
 
