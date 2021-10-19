@@ -1,66 +1,87 @@
 ##############################
 #
-#    NE103: WWT headstarted Curlew age vs mass
+#    NE103: Headstarted Curlew age vs biometrics
 #
 ##############################
 
-library(tidyverse)
-library(patchwork)
+# ======================   Variables to pass to setup code source  ===========
+
+# Header code to install and load packages, set directory paths, set seed, capture session info
+
+# project_details <- list(project_name, output_version_name, workspace_version_name)
+# package_details <- c("package name 1", "package name 2")
+
+project_details <- list(project_name="curlew", output_version_date="2021_headstarting", workspace_version_date="2021_headstarting")
+package_details <- c("sf","tidyverse","patchwork","move","moveVis","RColorBrewer","viridisLite","rcartocolor","lubridate")
+seed_number <- 1
 
 
-# sexing results
-df <- data.frame(sex = c("F", "M", "U"), totals = c(27+43, 20+35, 3+1))
-df <- rbind(c(27+43), c(20+35))
-dimnames(df) <- list(sex = c("F","M"), totals = c("observed"))
-xsq <- chisq.test(df)
+
+# =======================    Read header source code   =================
+
+# header code source:
+# 1. sets working directories
+# 2. loads required packages
+# 3. prints session info to file
+# 4. sets seed for reproducibility
+
+# should run on either PC or Mac if using .Rproj
+source(file.path("code/source_setup_code_rproj.R"))
+
+# project directories created:
+# parentwd = Git
+# projectwd = eurasian_african_bird_migration_atlas
+# codewd = directory containing code, functions, source, etc
+# datawd = directory containing data
+# outputwd = directory containing outputs and results (within the appropriate version date)
+# workspacewd = directory containing workspace files (.rds, .rda, .RData; within the appropriate version date)
+# topoutputwd = top level output directory
+# topworkspacewd= top level workspace directory
 
 
-# Set working directory
-# setwd("~/Dropbox/BTO-Projects/Curlew and waders/NE103/Methods & fieldwork/permissions")
+
+# =======================    Load data   =================
+
+
+today_date <- format(Sys.Date(), "%d-%b-%Y")
 
 # Load data
 # dt <- read.csv(file.path("headstart_CU_age_mass.csv"), header = TRUE, stringsAsFactors = FALSE)
-dt <- read.csv(file.path("data/headstart_curlew_2021_biometrics.csv"), header = TRUE, stringsAsFactors = FALSE) %>% filter(flag_id != "2T")
+dt <- read.csv(file.path("data", "headstart_curlew_2021_biometrics_20210928.csv"), header = TRUE, stringsAsFactors = FALSE) %>% filter(flag_id != "2T")
 dt <- dt %>% 
   mutate(cohort_num = as.factor(cohort_num))
+
+
+# =======================    Figures - 2021 Pensthorpe birds   =================
+
 
 # 2021 data from Pensthorpe
 curve_age_mass <- ggplot(data = dt) +
   geom_point(aes(y = weight, x = age, colour = cohort_num)) +
-  geom_smooth(aes(y = weight, x = age, fill = cohort_num, colour = cohort_num), span = 1.2) +
-  geom_text(aes(y = weight, x = age, label = flag_id)) +
+  geom_smooth(aes(y = weight, x = age, fill = cohort_num, colour = cohort_num)) +
   labs(x = "Age", y = "Weight (g)", title = "Curve of weight vs age per cohort group")
 
-ggsave("output/figures/age_weight_per_cohort_with-smooth_with-flags.png", device = "png", width = 30, height = 20, units = "cm")
-
-curve_age_mass <- ggplot(data = dt) +
-  geom_point(aes(y = weight, x = age, colour = cohort_num)) +
-  # geom_smooth(aes(y = weight, x = age, fill = cohort_num, colour = cohort_num)) +
-  labs(x = "Age", y = "Weight (g)", title = "Curve of weight vs age per cohort group")
-
-ggsave("output/figures/age_weight_per_cohort_no-smooth.png", device = "png", width = 30, height = 20, units = "cm")
+ggsave(paste0("age_weight_per_cohort_", today_date, ".png"), device = "png", path = outputwd, width = 30, height = 20, units = "cm")
 
 # Wing vs age
 curve_age_wing <- ggplot(data = dt) +
   geom_point(aes(y = wing, x = age, colour = cohort_num)) +
-  geom_smooth(aes(y = wing, x = age, fill = cohort_num, colour = cohort_num), span = 1.2) +
+  geom_smooth(aes(y = wing, x = age, fill = cohort_num, colour = cohort_num)) +
   labs(x = "Age", y = "Wing length (mm)", title = "Curve of wing length vs age per cohort group")
 
-ggsave("output/figures/age_wing_per_cohort_with-smooth.png", device = "png", width = 30, height = 20, units = "cm")
+ggsave(paste0("age_wing_per_cohort_", today_date, ".png"), device = "png", path = outputwd, width = 30, height = 20, units = "cm")
 
 
 # Weight vs wing
 curve_weight_wing <- ggplot(data = dt) +
   geom_point(aes(y = weight, x = wing, colour = cohort_num)) +
-  geom_smooth(aes(y = weight, x = wing, fill = cohort_num, colour = cohort_num), span = 1.2) +
+  geom_smooth(aes(y = weight, x = wing, fill = cohort_num, colour = cohort_num)) +
   labs(x = "Wing length (mm)", y = "Weight (g)", title = "Curve of weight vs wing length per cohort group")
 
-ggsave("output/figures/weight_wing_per_cohort_with-smooth.png", device = "png", width = 30, height = 20, units = "cm")
+ggsave(paste0("weight_wing_per_cohort_", today_date, ".png"), device = "png", path = outputwd, width = 30, height = 20, units = "cm")
 
 
-#####################################
-#####################################
-#####################################
+# =======================    Figures - 2019 WWT birds  =================
 
 
 # Plot age vs weight
@@ -99,7 +120,7 @@ mass_violin <- ggplot(data = dt %>% filter(age_last_mass >= 43),
 ((curve_age_mass / age_violin) | mass_violin) +
   plot_annotation(tag_levels = 'A')
 
-ggsave("age_mass_plots.png", device = "png", width = 30, height = 20, units = "cm")
+ggsave("age_mass_plots.png", device = "png", path = outputwd, width = 30, height = 20, units = "cm")
 
 # Calculate descriptive stats
 dt %>% filter(age_last_mass >= 43) %>% summarise(mean(last_mass))
