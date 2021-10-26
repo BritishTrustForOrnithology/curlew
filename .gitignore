@@ -7,6 +7,7 @@ workspaces/*
 data/tracking_data
 data/nrs_data
 data/atlas_data
+data/wwrg_data
 output/*
 media/*
 
