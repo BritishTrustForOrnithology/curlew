@@ -39,7 +39,7 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, fig.height
 ```{r leaflet-map-by-tide-height, results='hide', eval = TRUE}
 
 # convert lat lon to points
-dt_map <- st_as_sf(tag_tide_merged_dt, coords = c("location.long","location.lat"), crs=4326)
+dt_map <- st_as_sf(tag_tide_merged_dt, coords = c("location_long","location_lat"), crs=4326)
 
 ## Create a continuous palette function
 pal <- colorNumeric(

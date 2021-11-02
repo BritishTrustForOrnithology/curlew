@@ -80,7 +80,7 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, fig.height
 # 1. split dataset into list by tag;
 # 2. convert each tag dataset to a points sf object
 dt_map_list <-
-  split(all_tags, all_tags$individual.local.identifier, drop=TRUE) #%>%
+  split(all_tags, all_tags$local_identifier, drop=TRUE) #%>%
 # lapply(., function(d) st_as_sf(d, coords = c("location.long","location.lat"), crs=4326))
 
 
@@ -92,7 +92,7 @@ make.palette <- function(categories) {
   return(pal_all)
 }
 
-all_indvs <- unique(all_tags$individual.local.identifier)
+all_indvs <- unique(all_tags$local_identifier)
 col_pal <- make.palette(all_indvs)
 
 
@@ -117,8 +117,8 @@ sapply(names(dt_map_list), function(df) {
   
   leaflet_map <<- leaflet_map %>% 
     addCircleMarkers(data = dt_map_list[[df]],
-                              lng = dt_map_list[[df]]$location.long, 
-                              lat = dt_map_list[[df]]$location.lat,
+                              lng = dt_map_list[[df]]$location_long, 
+                              lat = dt_map_list[[df]]$location_lat,
                               # group = paste(df, "points"),
                               group = paste(df),
                               radius = 1,
@@ -131,8 +131,8 @@ sapply(names(dt_map_list), function(df) {
                               options = popupOptions(closeButton = TRUE)
     ) %>%
     addPolylines(data = dt_map_list[[df]],
-                 lng = dt_map_list[[df]]$location.long, 
-                 lat = dt_map_list[[df]]$location.lat,
+                 lng = dt_map_list[[df]]$location_long, 
+                 lat = dt_map_list[[df]]$location_lat,
                  group = paste(df),
                  color = pal_colour,
                  weight = 2
