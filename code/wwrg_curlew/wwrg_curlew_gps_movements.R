@@ -14,7 +14,7 @@
 # package_details <- c("package name 1", "package name 2")
 
 project_details <- list(project_name="curlew", output_version_date="wwrg", workspace_version_date="wwrg")
-package_details <- c("sf","tidyverse","patchwork","move","moveVis","RColorBrewer","viridisLite","rcartocolor","lubridate", "sf", "knitr", "leaflet", "shiny", "move")
+package_details <- c("sf","tidyverse","patchwork","move","moveVis","RColorBrewer","viridisLite","rcartocolor","lubridate", "sf", "knitr", "leaflet", "shiny", "move", "leaflet.extras2", "geojsonsf") 
 seed_number <- 1
 
 
@@ -59,10 +59,24 @@ all_tags <- getMovebankData(
 all_tags$new_datetime <- as.POSIXct(strptime(all_tags$timestamp, format = "%Y-%m-%d %H:%M:%S", tz="UTC"))
 all_tags$new_datetime_min <- format(all_tags$new_datetime,format='%Y-%m-%d %H:%M')
 
-first_date <- min(all_tags$new_datetime) %>% as.Date()
-last_date <- max(all_tags$new_datetime) %>% as.Date()
 
-tide_dt <- read.csv(file.path(datawd, "wwrg_data", "Tides_Bulldog_Bcn_20211006_20211106_0.csv"), header = TRUE, stringsAsFactors = FALSE, skip = 1)[2:12]
+# Choose dates -----------------
+
+first_date <- "2022-02-01"
+# first_date <- min(all_tags$new_datetime) %>% as.Date()
+last_date <- "2022-02-19"
+
+all_tags_filtered <- all_tags %>% 
+  filter(new_datetime >= first_date & new_datetime <= last_date)
+
+names(all_tags_filtered) <- names(all_tags_filtered) %>% 
+  str_replace_all("[.]", "_")
+
+tide_dt <- read.csv(file.path(datawd, "wwrg_data", "Tides_Bulldog_Bcn_20211001_20211101_0.csv"), header = TRUE, stringsAsFactors = FALSE, skip = 1)[2:12] %>% 
+  rbind(., read.csv(file.path(datawd, "wwrg_data", "Tides_Bulldog_Bcn_20211101_20211201_0.csv"), header = TRUE, stringsAsFactors = FALSE, skip = 1)[2:12]) %>% 
+  rbind(., read.csv(file.path(datawd, "wwrg_data", "Tides_Bulldog_Bcn_20211201_20220101_0.csv"), header = TRUE, stringsAsFactors = FALSE, skip = 1)[2:12]) %>% 
+  rbind(., read.csv(file.path(datawd, "wwrg_data", "Tides_Bulldog_Bcn_20220101_20220201_0.csv"), header = TRUE, stringsAsFactors = FALSE, skip = 1)[2:12]) %>% 
+  rbind(., read.csv(file.path(datawd, "wwrg_data", "Tides_Bulldog_Bcn_20220201_20220301_0.csv"), header = TRUE, stringsAsFactors = FALSE, skip = 1)[2:12])
 names(tide_dt) <- c("site_name", "timestamp", "observed_m", "predicted_m", "surge_m", "msl_m", "residual_m", "sd_m", "status", "quality_percent", "quality_flag")
 tide_dt$new_datetime <- as.POSIXct(strptime(tide_dt$timestamp, format = "%Y-%m-%d %H:%M:%S", tz="UTC"))
 tide_dt$new_datetime_min <- format(tide_dt$new_datetime,format='%Y-%m-%d %H:%M')
@@ -70,7 +84,7 @@ tide_dt$new_datetime_min <- format(tide_dt$new_datetime,format='%Y-%m-%d %H:%M')
 tide_dt <- tide_dt %>% 
   filter(new_datetime >= first_date & new_datetime <= last_date)
 
-tag_tide_merged_dt <- merge(all_tags, tide_dt, by = "new_datetime_min", all.x = TRUE) %>%
+tag_tide_merged_dt <- merge(all_tags_filtered, tide_dt, by = "new_datetime_min", all.x = TRUE) %>%
   filter(!is.na(observed_m))
 
 if (filter_data) {
@@ -81,6 +95,17 @@ if (filter_data) {
 
 
 # =======================    Produce R Markdown maps   =================
+
+############# 
+############# 
+############# 
+
+############# Add crosstalk data slider filter
+
+############# 
+############# 
+############# 
+############# 
 
 # --------  Map of all tagged birds by individual  ----------
 
@@ -93,7 +118,7 @@ if (filter_data) {
 # Create normal map
 rmarkdown::render(
   input = file.path(codewd, "wwrg_curlew", "wwrg_curlew_leaflet_maps.Rmd"),
-  output_file = paste0("all_tags_leaflet_map_", Sys.Date(), ".html"),
+  output_file = paste0(today_date, "_all_tags_leaflet_map_", first_date, "_", last_date, ".html"),
   output_dir = outputwd)
 
 
@@ -108,7 +133,7 @@ rmarkdown::render(
 # Create normal map
 rmarkdown::render(
   input = file.path(codewd, "wwrg_curlew", "wwrg_curlew_leaflet_maps_tide_height.Rmd"),
-  output_file = paste0("all_tags_leaflet_map_tide_height_", Sys.Date(), ".html"),
+  output_file = paste0(today_date, "_all_tags_leaflet_map_tide_height_", first_date, "_", last_date, ".html"),
   output_dir = outputwd)
 
 
