@@ -81,7 +81,9 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, fig.height
 
 ```{r leaflet-map-all-tags-layers, results='hide', eval = TRUE}
 
+
 # # 1. split dataset into list by tag;
+# Create HTML labels showing date, altitude & other info
 # # 2. convert each tag dataset to a points sf object
 # dt_map_list <-
 #   split(all_tags_filtered, all_tags_filtered$individual_local_identifier, drop=TRUE) %>%
@@ -89,7 +91,15 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, fig.height
 
 # split by tag, but don't convert to sf object
 dt_map_list <-
-  split(all_tags_filtered, all_tags_filtered$local_identifier, drop=TRUE)
+  split(all_tags_filtered %>% 
+  mutate(html_labels = paste0(
+    "timestamp = ", new_datetime, "<br/>",
+    "altitude =  ", height_above_msl, "<br/>",
+    "external temp = ", external_temperature, "<br/>",
+    "ground speed = ", ground_speed, "<br/>"
+    )
+  )
+, all_tags_filtered$local_identifier, drop=TRUE)
 
 # -----  set colour palette  ------
 
@@ -101,6 +111,7 @@ make.palette <- function(categories) {
 
 all_indvs <- unique(all_tags_filtered$local_identifier)
 col_pal <- make.palette(all_indvs)
+
 
 
 # -----  create the leaflet mapping object  ------
@@ -135,6 +146,7 @@ sapply(names(dt_map_list), function(df) {
                      stroke = TRUE,
                      color = pal_colour,
                      label = ~new_datetime,
+                     popup = ~html_labels,
                      options = popupOptions(closeButton = TRUE)
     ) %>%
     addPolylines(data = dt_map_list[[df]],

@@ -59,12 +59,20 @@ all_tags <- getMovebankData(
 all_tags$new_datetime <- as.POSIXct(strptime(all_tags$timestamp, format = "%Y-%m-%d %H:%M:%S", tz="UTC"))
 all_tags$new_datetime_min <- format(all_tags$new_datetime,format='%Y-%m-%d %H:%M')
 
+# add time since midnight
+clocks <-  function(t){hour(t)*3600+minute(t)*60+second(t)}
+all_tags$sec_since_midnight <- clocks(all_tags$new_datetime)
+
+# add rough day / night variable (6am UTC to 6pm UTC = day)
+all_tags <- all_tags %>% 
+  mutate(day_night = ifelse(sec_since_midnight < 21600 | sec_since_midnight > 64800, "night", "day"))
+
 
 # Choose dates -----------------
 
-first_date <- "2022-02-01"
+first_date <- "2021-10-11"
 # first_date <- min(all_tags$new_datetime) %>% as.Date()
-last_date <- "2022-02-19"
+last_date <- today_date
 
 all_tags_filtered <- all_tags %>% 
   filter(new_datetime >= first_date & new_datetime <= last_date)
@@ -72,11 +80,15 @@ all_tags_filtered <- all_tags %>%
 names(all_tags_filtered) <- names(all_tags_filtered) %>% 
   str_replace_all("[.]", "_")
 
+
+# Load & merge tide data -----------------
+
 tide_dt <- read.csv(file.path(datawd, "wwrg_data", "Tides_Bulldog_Bcn_20211001_20211101_0.csv"), header = TRUE, stringsAsFactors = FALSE, skip = 1)[2:12] %>% 
   rbind(., read.csv(file.path(datawd, "wwrg_data", "Tides_Bulldog_Bcn_20211101_20211201_0.csv"), header = TRUE, stringsAsFactors = FALSE, skip = 1)[2:12]) %>% 
   rbind(., read.csv(file.path(datawd, "wwrg_data", "Tides_Bulldog_Bcn_20211201_20220101_0.csv"), header = TRUE, stringsAsFactors = FALSE, skip = 1)[2:12]) %>% 
   rbind(., read.csv(file.path(datawd, "wwrg_data", "Tides_Bulldog_Bcn_20220101_20220201_0.csv"), header = TRUE, stringsAsFactors = FALSE, skip = 1)[2:12]) %>% 
-  rbind(., read.csv(file.path(datawd, "wwrg_data", "Tides_Bulldog_Bcn_20220201_20220301_0.csv"), header = TRUE, stringsAsFactors = FALSE, skip = 1)[2:12])
+  rbind(., read.csv(file.path(datawd, "wwrg_data", "Tides_Bulldog_Bcn_20220201_20220301_0.csv"), header = TRUE, stringsAsFactors = FALSE, skip = 1)[2:12]) %>% 
+  rbind(., read.csv(file.path(datawd, "wwrg_data", "Tides_Bulldog_Bcn_20220301_20220401_0.csv"), header = TRUE, stringsAsFactors = FALSE, skip = 1)[2:12])
 names(tide_dt) <- c("site_name", "timestamp", "observed_m", "predicted_m", "surge_m", "msl_m", "residual_m", "sd_m", "status", "quality_percent", "quality_flag")
 tide_dt$new_datetime <- as.POSIXct(strptime(tide_dt$timestamp, format = "%Y-%m-%d %H:%M:%S", tz="UTC"))
 tide_dt$new_datetime_min <- format(tide_dt$new_datetime,format='%Y-%m-%d %H:%M')
@@ -94,6 +106,73 @@ if (filter_data) {
 }
 
 
+# Clean tag data - generic  -----------------
+
+# filter out low sat counts
+# filter out altitudes that are unlikely
+tags_cleaned <- all_tags_filtered %>% 
+  filter(gps_satellite_count >= 3)
+
+
+# Clean tag data - altitude  -----------------
+
+# filter out low sat counts
+# filter out altitudes that are unlikely
+tags_cleaned_alt <- all_tags_filtered %>% 
+  filter(gps_satellite_count >= 3) %>% 
+  filter(height_above_msl >= 0 & height_above_msl <= 2000)
+
+
+# Clean tag data - ground speed  -----------------
+
+# filter out low sat counts
+# filter out altitudes that are unlikely
+tags_cleaned_speed <- all_tags_filtered %>% 
+  filter(gps_satellite_count >= 3) %>% 
+  filter(ground_speed > 0)
+
+
+
+
+# Plot data -----------------
+
+# 6NO - longitude spring 2022
+orn_6no_spring_2022_lon <- ggplot(data = all_tags %>% 
+                                filter(local_identifier %in% "213815_WFN(6N)/O") %>% 
+                                filter(new_datetime >= "2022-04-12" & new_datetime <= "2022-04-14") %>% 
+                                filter(height_above_msl >= 0),
+                              # aes(x = new_datetime, y = height.above.msl)) +
+                              aes(x = new_datetime, y = location_long)) +
+  geom_line() +
+  scale_x_datetime(breaks = "1 hour") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
+  labs(x = "", y = "longitude")
+
+# 6NO - height above MSL spring 2022
+orn_6no_spring_2022_alt <- ggplot(data = all_tags %>% 
+                                filter(local_identifier %in% "213815_WFN(6N)/O") %>% 
+                                filter(new_datetime >= "2022-04-12" & new_datetime <= "2022-04-14") %>% 
+                                filter(height_above_msl >= 0),
+                              aes(x = new_datetime, y = height_above_msl)) +
+  # aes(x = new_datetime, y = location.long)) +
+  geom_line() +
+  scale_x_datetime(breaks = "1 hour") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
+  labs(x = "Timestamp (UTC)", y = "height above msl")
+
+# A3N
+orn_6no_spring_2022_lon / orn_6no_spring_2022_alt + plot_annotation(title = "Curlew 6N/O spring migration 2022")
+
+ggsave(
+  filename = paste0("6NO_spring_2022.png"),
+  path = outputwd,
+  height = 210,
+  width= 210,
+  units = "mm"
+)
+
+
+
 # =======================    Produce R Markdown maps   =================
 
 ############# 
@@ -109,13 +188,6 @@ if (filter_data) {
 
 # --------  Map of all tagged birds by individual  ----------
 
-# run R markdown file
-# rmarkdown::render(file.path(codewd, "wwrg_curlew", "wwrg_curlew_leaflet_maps.Rmd"),
-#                   output_file = file.path(outputwd, paste0("all_tags_leaflet_map_", Sys.Date(), 
-#                                                                '.html'))
-# )
-
-# Create normal map
 rmarkdown::render(
   input = file.path(codewd, "wwrg_curlew", "wwrg_curlew_leaflet_maps.Rmd"),
   output_file = paste0(today_date, "_all_tags_leaflet_map_", first_date, "_", last_date, ".html"),
@@ -124,16 +196,40 @@ rmarkdown::render(
 
 # --------  Map of all tagged birds by tide height  ----------
 
-# run R markdown file
-# rmarkdown::render(file.path(codewd, "wwrg_curlew", "wwrg_curlew_leaflet_maps.Rmd"),
-#                   output_file = file.path(outputwd, paste0("all_tags_leaflet_map_", Sys.Date(), 
-#                                                                '.html'))
-# )
 
-# Create normal map
 rmarkdown::render(
   input = file.path(codewd, "wwrg_curlew", "wwrg_curlew_leaflet_maps_tide_height.Rmd"),
   output_file = paste0(today_date, "_all_tags_leaflet_map_tide_height_", first_date, "_", last_date, ".html"),
+  output_dir = outputwd)
+
+
+
+# --------  Map of all tagged birds by flight height  ----------
+
+
+rmarkdown::render(
+  input = file.path(codewd, "wwrg_curlew", "wwrg_curlew_leaflet_maps_altitude.Rmd"),
+  output_file = paste0(today_date, "_all_tags_leaflet_map_altitude_", first_date, "_", last_date, ".html"),
+  output_dir = outputwd)
+
+
+# --------  Map of all tagged birds by ground speed  ----------
+
+
+rmarkdown::render(
+  input = file.path(codewd, "wwrg_curlew", "wwrg_curlew_leaflet_maps_ground_speed.Rmd"),
+  output_file = paste0(today_date, "_all_tags_leaflet_map_ground_speed_", first_date, "_", last_date, ".html"),
+  output_dir = outputwd)
+
+
+
+# --------  Map of all tagged birds by day / night  ----------
+
+
+# Create normal map
+rmarkdown::render(
+  input = file.path(codewd, "wwrg_curlew", "wwrg_curlew_leaflet_maps_day-night.Rmd"),
+  output_file = paste0(today_date, "_all_tags_leaflet_map_day-night_", first_date, "_", last_date, ".html"),
   output_dir = outputwd)
 
 
