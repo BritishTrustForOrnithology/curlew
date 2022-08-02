@@ -1,0 +1,186 @@
+---
+output: 
+  html_document: default
+editor_options:
+  chunk_output_type: console
+params:
+  set_title_1: !r first_date
+  set_title_2: !r last_date
+---
+
+---
+title: Brecks tagged curlew movements from `r params$set_title_1` to `r params$set_title_2`
+---
+
+```{css, echo=FALSE}
+body .main-container {
+max-width: 1600px;
+height: 1200px;
+}
+body {
+max-width: 1600px;
+height: 1200px;
+font-size: 12px;
+}
+h1.title {
+font-size: 24px;
+}
+h1 { /* Header 1 */
+font-size: 16px;
+}
+
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, fig.height = 8, out.width="100%")
+```
+
+
+```{r leaflet-map-all-tags, results='hide', eval = FALSE}
+
+# # convert lat lon to points
+# dt_map <- all_tags_filtered %>%
+#   mutate(individual_local_identifier = as.factor(local_identifier)) %>%
+#   st_as_sf(., coords = c("location_long","location_lat"), crs=4326)
+# 
+# 
+# # -----  set colour palette  ------
+# 
+# n_all_categories <- length(levels(dt_map$local_identifier))
+# factpal <- colorFactor(viridisLite::viridis(n_all_categories), dt_map$local_identifier)
+# 
+# 
+# # create base map
+# leaflet_map <- leaflet(dt_map,
+#                        options = leafletOptions(
+#                          zoomSnap = 0.5,
+#                          zoomDelta = 0.5
+#                        )) %>%
+#   addProviderTiles("CartoDB.Positron", group = "CartoDB Positron with labels")  %>%
+#   addProviderTiles("Esri.WorldImagery", group = "Esri WorldImagery") %>%
+#   addTiles(group = "OpenStreetMap") %>%
+#   addCircleMarkers(
+#     # data = dt_map,
+#     fill = TRUE,
+#     radius = 1,
+#     fillColor = ~factpal(local_identifier),
+#     fillOpacity = 0.8,
+#     stroke = TRUE,
+#     color = ~factpal(local_identifier),
+#     label = ~new_datetime,
+#     options = popupOptions(closeButton = TRUE)
+#   ) %>%
+# addLayersControl(
+#   baseGroups = c("CartoDB Positron with labels", "Esri WorldImagery", "OpenStreetMap"),
+#   options = layersControlOptions(collapsed = FALSE)
+# )
+# 
+# leaflet_map
+
+```
+
+```{r leaflet-map-all-tags-layers, results='hide', eval = TRUE}
+
+
+# # 1. split dataset into list by tag;
+# Create HTML labels showing date, altitude & other info
+# # 2. convert each tag dataset to a points sf object
+# dt_map_list <-
+#   split(all_tags_filtered, all_tags_filtered$individual_local_identifier, drop=TRUE) %>%
+#   lapply(., function(d) st_as_sf(d, coords = c("location_long","location_lat"), crs=4326))
+
+# split by tag, but don't convert to sf object
+dt_map_list <-
+  split(all_tags_filtered %>% 
+  mutate(html_labels = paste0(
+    "timestamp = ", new_datetime, "<br/>",
+    "altitude =  ", height_above_msl, "<br/>",
+    "external temp = ", external_temperature, "<br/>",
+    "ground speed = ", ground_speed, "<br/>"
+    )
+  )
+, all_tags_filtered$local_identifier, drop=TRUE)
+
+# -----  set colour palette  ------
+
+make.palette <- function(categories) {
+  n_all_categories <- length(categories)
+  pal_all <- c(viridisLite::viridis(n_all_categories))
+  return(pal_all)
+}
+
+all_indvs <- unique(all_tags_filtered$local_identifier)
+col_pal <- make.palette(all_indvs)
+
+
+
+# -----  create the leaflet mapping object  ------
+
+# create base map
+leaflet_map <- leaflet(options = leafletOptions(
+  zoomSnap = 0.5,
+  zoomDelta = 0.5
+)) %>% 
+  addProviderTiles("CartoDB.PositronNoLabels", group = "CartoDB Positron")  %>%
+  addProviderTiles("CartoDB.Positron", group = "CartoDB Positron with labels")  %>%
+  addProviderTiles("CartoDB.DarkMatterNoLabels", group="CartoDB Dark Matter") %>%
+  addProviderTiles("Esri.WorldImagery", group = "Esri WorldImagery") %>%
+  addTiles(group = "OpenStreetMap")
+
+sapply(names(dt_map_list), function(df) {
+  
+  # sets unique colour for each list element according to pre-defined palette
+  pal_colour <- col_pal[which(all_indvs %in% df)]
+  
+  
+  leaflet_map <<- leaflet_map %>% 
+    addCircleMarkers(data = dt_map_list[[df]],
+                     lng = dt_map_list[[df]]$location_long, 
+                     lat = dt_map_list[[df]]$location_lat,
+                     # group = paste(df, "points"),
+                     group = paste(df),
+                     radius = 1,
+                     fill = TRUE,
+                     fillColor = pal_colour,
+                     fillOpacity = 0.8,
+                     stroke = TRUE,
+                     color = pal_colour,
+                     label = ~new_datetime,
+                     popup = ~html_labels,
+                     options = popupOptions(closeButton = TRUE)
+    ) %>%
+    addPolylines(data = dt_map_list[[df]],
+                 lng = dt_map_list[[df]]$location_long,
+                 lat = dt_map_list[[df]]$location_lat,
+                 group = paste(df),
+                 color = pal_colour,
+                 weight = 2
+    )
+  
+})
+
+
+# add extra controls for layers, legends, etc
+leaflet_map <- leaflet_map %>% 
+  addLayersControl(
+    baseGroups = c("CartoDB Positron", "CartoDB Positron with labels", "CartoDB Dark Matter", "Esri WorldImagery", "OpenStreetMap"),
+    overlayGroups = c(names(dt_map_list)),
+    options = layersControlOptions(collapsed = FALSE)
+  ) %>% 
+  addLegend("bottomleft",
+            colors = col_pal,
+            labels = all_indvs,
+            title = "Tag ID & colour marks",
+            opacity = 5
+  )
+
+
+
+
+```
+
+```{r output-leaflet-map, eval = TRUE, fig.width = 12}
+leaflet_map
+
+```
+
