@@ -1,14 +1,14 @@
 
 # =============== Session info ==================
 
-# ----  Date:  21-Apr-2022  --------
+# ----  Date:  30-Sep-2022  --------
 
-R version 4.1.1 (2021-08-10)
+R version 4.2.1 (2022-06-23)
 Platform: aarch64-apple-darwin20 (64-bit)
 Running under: macOS Big Sur 11.5.2
 
 Matrix products: default
-LAPACK: /Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/lib/libRlapack.dylib
+LAPACK: /Library/Frameworks/R.framework/Versions/4.2-arm64/Resources/lib/libRlapack.dylib
 
 locale:
 [1] en_GB.UTF-8/en_GB.UTF-8/en_GB.UTF-8/C/en_GB.UTF-8/en_GB.UTF-8
@@ -17,27 +17,28 @@ attached base packages:
 [1] stats     graphics  grDevices utils     datasets  methods   base     
 
 other attached packages:
- [1] geojsonsf_2.0.1       leaflet.extras2_1.1.0 shiny_1.7.1           leaflet_2.0.4.1      
- [5] knitr_1.36            lubridate_1.8.0       rcartocolor_2.0.0     viridisLite_0.4.0    
- [9] RColorBrewer_1.1-2    moveVis_0.10.5        move_4.0.6            rgdal_1.5-27         
-[13] raster_3.4-13         sp_1.4-5              geosphere_1.5-14      patchwork_1.1.1      
-[17] forcats_0.5.1         stringr_1.4.0         dplyr_1.0.8           purrr_0.3.4          
-[21] readr_2.0.2           tidyr_1.1.4           tibble_3.1.6          ggplot2_3.3.5        
-[25] tidyverse_1.3.1       sf_1.0-2             
+ [1] geojsonsf_2.0.3       leaflet.extras2_1.2.0 shiny_1.7.1           leaflet_2.1.1        
+ [5] knitr_1.39            lubridate_1.8.0       rcartocolor_2.0.0     viridisLite_0.4.0    
+ [9] RColorBrewer_1.1-3    moveVis_0.10.5        move_4.1.8            rgdal_1.5-32         
+[13] raster_3.5-21         sp_1.5-0              geosphere_1.5-14      patchwork_1.1.1      
+[17] forcats_0.5.1         stringr_1.4.0         dplyr_1.0.9           purrr_0.3.4          
+[21] readr_2.1.2           tidyr_1.2.0           tibble_3.1.7          ggplot2_3.3.6        
+[25] tidyverse_1.3.1       sf_1.0-7             
 
 loaded via a namespace (and not attached):
- [1] fs_1.5.2           httr_1.4.2         tools_4.1.1        backports_1.2.1    utf8_1.2.2        
- [6] R6_2.5.1           KernSmooth_2.23-20 DBI_1.1.1          colorspace_2.0-2   withr_2.4.2       
-[11] tidyselect_1.1.1   curl_4.3.2         compiler_4.1.1     cli_3.1.0          rvest_1.0.2       
-[16] av_0.6.0           xml2_1.3.2         scales_1.1.1       classInt_0.4-3     pbapply_1.5-0     
-[21] proxy_0.4-26       digest_0.6.28      rmarkdown_2.11     pkgconfig_2.0.3    htmltools_0.5.2   
-[26] dbplyr_2.1.1       fastmap_1.1.0      htmlwidgets_1.5.4  rlang_1.0.2        readxl_1.3.1      
-[31] rstudioapi_0.13    generics_0.1.1     jsonlite_1.7.2     crosstalk_1.1.1    magrittr_2.0.2    
-[36] Rcpp_1.0.7         munsell_0.5.0      fansi_0.5.0        lifecycle_1.0.1    stringi_1.7.5     
-[41] grid_4.1.1         parallel_4.1.1     promises_1.2.0.1   crayon_1.4.2       lattice_0.20-44   
-[46] haven_2.4.3        cowplot_1.1.1      hms_1.1.1          magick_2.7.3       pillar_1.6.4      
-[51] codetools_0.2-18   reprex_2.0.1       glue_1.6.2         evaluate_0.14      gifski_1.4.3-1    
-[56] modelr_0.1.8       vctrs_0.3.8        tzdb_0.1.2         httpuv_1.6.3       cellranger_1.1.0  
-[61] gtable_0.3.0       slippymath_0.3.1   assertthat_0.2.1   cachem_1.0.6       xfun_0.27         
-[66] mime_0.12          xtable_1.8-4       broom_0.7.9        e1071_1.7-9        later_1.3.0       
-[71] class_7.3-19       memoise_2.0.0      units_0.7-2        ellipsis_0.3.2    
+ [1] fs_1.5.2           httr_1.4.3         tools_4.2.1        backports_1.4.1    utf8_1.2.2        
+ [6] R6_2.5.1           KernSmooth_2.23-20 DBI_1.1.3          colorspace_2.0-3   withr_2.5.0       
+[11] tidyselect_1.1.2   curl_4.3.2         compiler_4.2.1     cli_3.3.0          rvest_1.0.2       
+[16] av_0.7.0           xml2_1.3.3         scales_1.2.0       classInt_0.4-7     pbapply_1.5-0     
+[21] proxy_0.4-27       digest_0.6.29      rmarkdown_2.14     pkgconfig_2.0.3    htmltools_0.5.2   
+[26] dbplyr_2.2.1       fastmap_1.1.0      htmlwidgets_1.5.4  rlang_1.0.3        readxl_1.4.0      
+[31] rstudioapi_0.13    generics_0.1.3     jsonlite_1.8.0     crosstalk_1.2.0    magrittr_2.0.3    
+[36] Rcpp_1.0.9         munsell_0.5.0      fansi_1.0.3        lifecycle_1.0.1    terra_1.5-34      
+[41] stringi_1.7.6      grid_4.2.1         promises_1.2.0.1   parallel_4.2.1     crayon_1.5.1      
+[46] lattice_0.20-45    haven_2.5.0        cowplot_1.1.1      hms_1.1.1          magick_2.7.3      
+[51] pillar_1.7.0       codetools_0.2-18   reprex_2.0.1       glue_1.6.2         evaluate_0.15     
+[56] gifski_1.6.6-1     modelr_0.1.8       vctrs_0.4.1        tzdb_0.3.0         httpuv_1.6.5      
+[61] cellranger_1.1.0   gtable_0.3.0       slippymath_0.3.1   assertthat_0.2.1   cachem_1.0.6      
+[66] xfun_0.31          mime_0.12          xtable_1.8-4       lwgeom_0.2-8       broom_1.0.0       
+[71] e1071_1.7-11       later_1.3.0        class_7.3-20       memoise_2.0.1      units_0.8-0       
+[76] ellipsis_0.3.2    
