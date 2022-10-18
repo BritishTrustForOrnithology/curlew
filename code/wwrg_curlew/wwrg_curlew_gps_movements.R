@@ -14,7 +14,7 @@
 # package_details <- c("package name 1", "package name 2")
 
 project_details <- list(project_name="curlew", output_version_date="wwrg", workspace_version_date="wwrg")
-package_details <- c("sf","tidyverse","patchwork","move","moveVis","RColorBrewer","viridisLite","rcartocolor","lubridate", "sf", "knitr", "leaflet", "shiny", "move", "leaflet.extras2", "geojsonsf") 
+package_details <- c("webshot", "sf","tidyverse","patchwork","move","moveVis","RColorBrewer","viridisLite","rcartocolor","lubridate", "sf", "knitr", "leaflet", "shiny", "move", "leaflet.extras2", "geojsonsf", "tinytex") 
 seed_number <- 1
 
 
@@ -67,43 +67,62 @@ all_tags$sec_since_midnight <- clocks(all_tags$new_datetime)
 all_tags <- all_tags %>% 
   mutate(day_night = ifelse(sec_since_midnight < 21600 | sec_since_midnight > 64800, "night", "day"))
 
+migration_dates <- data.frame(
+  stringsAsFactors = FALSE,
+  local_identifier = c("213809_G/WFN(N0)G",
+                       "213810_G/WFN(N2)G","213811_G/WFN(N4)G",
+                       "213812_G/WFN(N6)G","213813_G/WFN(N7)G",
+                       "213814_G/WFN(N5)G","213815_WFN(6N)/O",
+                       "213816_G/WFN(N3)G",
+                       "213817_G/WFN(NA)G","213818_WFN(4J)/O"),
+  north_22 = c("2022-04-17","2022-04-13",
+               "2022-04-25","2022-04-12","2022-04-20",
+               "2022-04-14","2022-04-12",
+               "2022-04-17","2022-04-18","2022-04-14"),
+  south_22 = c("2022-07-01","2022-06-23",
+               "2022-07-11","2022-07-07","2022-06-30",
+               "2022-07-09","2022-06-22",NA,
+               "2022-06-28","2022-06-29")
+)
+
 
 # Choose dates -----------------
 
-first_date <- "2021-10-11"
+first_date <- "2022-04-10"
 # first_date <- min(all_tags$new_datetime) %>% as.Date()
-last_date <- today_date
+last_date <- "2022-04-25"
 
 all_tags_filtered <- all_tags %>% 
-  filter(new_datetime >= first_date & new_datetime <= last_date)
+  filter(new_datetime >= first_date & new_datetime <= last_date) %>% 
+  filter(event_id != 23271192487)
 
 names(all_tags_filtered) <- names(all_tags_filtered) %>% 
   str_replace_all("[.]", "_")
 
 
-# Load & merge tide data -----------------
-
-tide_dt <- read.csv(file.path(datawd, "wwrg_data", "Tides_Bulldog_Bcn_20211001_20211101_0.csv"), header = TRUE, stringsAsFactors = FALSE, skip = 1)[2:12] %>% 
-  rbind(., read.csv(file.path(datawd, "wwrg_data", "Tides_Bulldog_Bcn_20211101_20211201_0.csv"), header = TRUE, stringsAsFactors = FALSE, skip = 1)[2:12]) %>% 
-  rbind(., read.csv(file.path(datawd, "wwrg_data", "Tides_Bulldog_Bcn_20211201_20220101_0.csv"), header = TRUE, stringsAsFactors = FALSE, skip = 1)[2:12]) %>% 
-  rbind(., read.csv(file.path(datawd, "wwrg_data", "Tides_Bulldog_Bcn_20220101_20220201_0.csv"), header = TRUE, stringsAsFactors = FALSE, skip = 1)[2:12]) %>% 
-  rbind(., read.csv(file.path(datawd, "wwrg_data", "Tides_Bulldog_Bcn_20220201_20220301_0.csv"), header = TRUE, stringsAsFactors = FALSE, skip = 1)[2:12]) %>% 
-  rbind(., read.csv(file.path(datawd, "wwrg_data", "Tides_Bulldog_Bcn_20220301_20220401_0.csv"), header = TRUE, stringsAsFactors = FALSE, skip = 1)[2:12])
-names(tide_dt) <- c("site_name", "timestamp", "observed_m", "predicted_m", "surge_m", "msl_m", "residual_m", "sd_m", "status", "quality_percent", "quality_flag")
-tide_dt$new_datetime <- as.POSIXct(strptime(tide_dt$timestamp, format = "%Y-%m-%d %H:%M:%S", tz="UTC"))
-tide_dt$new_datetime_min <- format(tide_dt$new_datetime,format='%Y-%m-%d %H:%M')
-
-tide_dt <- tide_dt %>% 
-  filter(new_datetime >= first_date & new_datetime <= last_date)
-
-tag_tide_merged_dt <- merge(all_tags_filtered, tide_dt, by = "new_datetime_min", all.x = TRUE) %>%
-  filter(!is.na(observed_m))
-
-if (filter_data) {
-  
-  tag_tide_merged_dt <- tag_tide_merged_dt %>%
-    filter(observed_m <= max_tide_height)
-}
+# # Load & merge tide data -----------------
+# 
+# tide_dt <- read.csv(file.path(datawd, "wwrg_data", "Tides_Bulldog_Bcn_20211001_20211101_0.csv"), header = TRUE, stringsAsFactors = FALSE, skip = 1)[2:12] %>% 
+#   rbind(., read.csv(file.path(datawd, "wwrg_data", "Tides_Bulldog_Bcn_20211101_20211201_0.csv"), header = TRUE, stringsAsFactors = FALSE, skip = 1)[2:12]) %>% 
+#   rbind(., read.csv(file.path(datawd, "wwrg_data", "Tides_Bulldog_Bcn_20211201_20220101_0.csv"), header = TRUE, stringsAsFactors = FALSE, skip = 1)[2:12]) %>% 
+#   rbind(., read.csv(file.path(datawd, "wwrg_data", "Tides_Bulldog_Bcn_20220101_20220201_0.csv"), header = TRUE, stringsAsFactors = FALSE, skip = 1)[2:12]) %>% 
+#   rbind(., read.csv(file.path(datawd, "wwrg_data", "Tides_Bulldog_Bcn_20220201_20220301_0.csv"), header = TRUE, stringsAsFactors = FALSE, skip = 1)[2:12]) %>% 
+#   rbind(., read.csv(file.path(datawd, "wwrg_data", "Tides_Bulldog_Bcn_20220301_20220401_0.csv"), header = TRUE, stringsAsFactors = FALSE, skip = 1)[2:12])
+# names(tide_dt) <- c("site_name", "timestamp", "observed_m", "predicted_m", "surge_m", "msl_m", "residual_m", "sd_m", "status", "quality_percent", "quality_flag")
+# tide_dt$new_datetime <- as.POSIXct(strptime(tide_dt$timestamp, format = "%Y-%m-%d %H:%M:%S", tz="UTC"))
+# tide_dt$new_datetime_min <- format(tide_dt$new_datetime,format='%Y-%m-%d %H:%M')
+# 
+# tide_dt <- tide_dt %>% 
+#   filter(new_datetime >= first_date & new_datetime <= last_date)
+# 
+# tag_tide_merged_dt <- merge(all_tags_filtered, tide_dt, by = "new_datetime_min", all.x = TRUE) %>%
+#   filter(!is.na(observed_m))
+# 
+# if (filter_data) {
+#   
+#   tag_tide_merged_dt <- tag_tide_merged_dt %>%
+#     filter(observed_m <= max_tide_height)
+# }
 
 
 # Clean tag data - generic  -----------------
@@ -111,7 +130,7 @@ if (filter_data) {
 # filter out low sat counts
 # filter out altitudes that are unlikely
 tags_cleaned <- all_tags_filtered %>% 
-  filter(gps_satellite_count >= 3)
+  filter(gps_satellite_count >= 4)
 
 
 # Clean tag data - altitude  -----------------
@@ -138,11 +157,11 @@ tags_cleaned_speed <- all_tags_filtered %>%
 
 # 6NO - longitude spring 2022
 orn_6no_spring_2022_lon <- ggplot(data = all_tags %>% 
-                                filter(local_identifier %in% "213815_WFN(6N)/O") %>% 
-                                filter(new_datetime >= "2022-04-12" & new_datetime <= "2022-04-14") %>% 
-                                filter(height_above_msl >= 0),
-                              # aes(x = new_datetime, y = height.above.msl)) +
-                              aes(x = new_datetime, y = location_long)) +
+                                    filter(local_identifier %in% "213815_WFN(6N)/O") %>% 
+                                    filter(new_datetime >= "2022-04-12" & new_datetime <= "2022-04-14") %>% 
+                                    filter(height_above_msl >= 0),
+                                  # aes(x = new_datetime, y = height.above.msl)) +
+                                  aes(x = new_datetime, y = location_long)) +
   geom_line() +
   scale_x_datetime(breaks = "1 hour") +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
@@ -150,10 +169,10 @@ orn_6no_spring_2022_lon <- ggplot(data = all_tags %>%
 
 # 6NO - height above MSL spring 2022
 orn_6no_spring_2022_alt <- ggplot(data = all_tags %>% 
-                                filter(local_identifier %in% "213815_WFN(6N)/O") %>% 
-                                filter(new_datetime >= "2022-04-12" & new_datetime <= "2022-04-14") %>% 
-                                filter(height_above_msl >= 0),
-                              aes(x = new_datetime, y = height_above_msl)) +
+                                    filter(local_identifier %in% "213815_WFN(6N)/O") %>% 
+                                    filter(new_datetime >= "2022-04-12" & new_datetime <= "2022-04-14") %>% 
+                                    filter(height_above_msl >= 0),
+                                  aes(x = new_datetime, y = height_above_msl)) +
   # aes(x = new_datetime, y = location.long)) +
   geom_line() +
   scale_x_datetime(breaks = "1 hour") +
@@ -188,9 +207,13 @@ ggsave(
 
 # --------  Map of all tagged birds by individual  ----------
 
+# webshot::install_phantomjs()
+# webshot::is_phantomjs_installed()
+# tinytex::install_tinytex()  # install TinyTeX
+
 rmarkdown::render(
   input = file.path(codewd, "wwrg_curlew", "wwrg_curlew_leaflet_maps.Rmd"),
-  output_file = paste0(today_date, "_all_tags_leaflet_map_", first_date, "_", last_date, ".html"),
+  output_file = paste0(today_date, "_all_tags_leaflet_map_", first_date, "_", last_date, ".htmlf"),
   output_dir = outputwd)
 
 

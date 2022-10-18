@@ -93,6 +93,7 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, fig.height
 dt_map_list <-
   split(all_tags_filtered %>% 
   mutate(html_labels = paste0(
+    "event id = ", event_id, "<br/>",
     "timestamp = ", new_datetime, "<br/>",
     "altitude =  ", height_above_msl, "<br/>",
     "external temp = ", external_temperature, "<br/>",
