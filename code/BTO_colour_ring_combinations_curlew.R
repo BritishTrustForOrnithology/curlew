@@ -5,14 +5,14 @@ new_packages <- list_of_packages[!(list_of_packages %in% installed.packages()[,"
 if(length(new_packages)) install.packages(new_packages)
 lapply(list_of_packages, library, character.only=TRUE)
 
-dt <- read.csv(file.path("data","Colour ring master list - Curlew.csv"), stringsAsFactors = FALSE)
+# dt <- read.csv(file.path("data","Colour ring master list - Curlew.csv"), stringsAsFactors = FALSE)
+dt <- read.csv(file.path("data","Wensleydale Curlew colour ring combinations_allocation sheet - BTO GWCT.csv"), stringsAsFactors = FALSE)
 dt <- dt %>% 
-  rename(allocation = U.Used..A.Allocated..N.Not.used..D.DO.NOT.USE) %>% 
-  rename(group = Priority.group.for.making)
+  rename(allocation = "U.Used.A..Allocated.N..Not.used.D..DO.NOT.USE") %>% 
+  rename(LB1 = "LB1..Tall.white.")
 
 dt_sub <- dt %>% 
-  filter(allocation == "A - BRECKS") %>% 
-  filter(group %in% c(1,2))
+  filter(Issued.to == "Samantha Franks")
 
 
 colour_list <- list()
@@ -23,6 +23,11 @@ colour_list[[1]] <- dt_sub %>%
   tally() %>% 
   rename(colour = LA1)
 
+# LA2
+colour_list[[1]] <- dt_sub %>% 
+  group_by(allocation, LA2) %>% 
+  tally() %>% 
+  rename(colour = LA2)
 
 # LB1
 colour_list[[3]] <- dt_sub %>%
@@ -30,11 +35,11 @@ colour_list[[3]] <- dt_sub %>%
   tally() %>% 
   rename(colour = LB1)
 
-# LB2
-colour_list[[4]] <- dt_sub %>%
-  group_by(allocation, LB2) %>% 
-  tally() %>% 
-  rename(colour = LB2)
+# # LB2
+# colour_list[[4]] <- dt_sub %>%
+#   group_by(allocation, LB2) %>% 
+#   tally() %>% 
+#   rename(colour = LB2)
 
 # RA1
 colour_list[[5]] <- dt_sub %>%
@@ -57,16 +62,18 @@ colour_list_order <- colour_list %>%
 colour_list_order
 
 # in stock
-# Yellow 20
-# White 20
-# Green 10
-# Black 10
-# Blue 15
-# Orange 15
+# Yellow 24
+# White 14
+# Green 20
+# Black 8
+# Blue 6
+# Orange 14
+# Lime 2
+# Red 4
 
 in_stock <- data.frame(
-  colour = c("Y","W","G","N","B","O","R"),
-  in_stock = c(10,21,11,11,16,16,12)
+  colour = c("Y","W","G","N","B","O","L","R"),
+  in_stock = c(24,14,20,8,6,14,2,4)
 )
 
 colour_list_order <- merge(colour_list_order, in_stock, on = "colour", all.x = TRUE) %>% 
