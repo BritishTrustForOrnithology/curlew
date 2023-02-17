@@ -49,12 +49,16 @@ source(file.path("code/source_setup_code_rproj.R"))
 today_date <- Sys.Date()
 
 file_format <- "mp4"   # various formats available in MoveVis package, if you've got a long animation, gif file size is huge, mp4s are much smaller
-map_service <- "osm"   # choose which map service, I've used osm and mapbox (satellite imagery)
-map_style <- "watercolor" # choose map style (terrain vs satellite)
+map_service <- "mapbox"   # choose which map service, I've used osm and mapbox (satellite imagery)
+map_style <- "satellite" # choose map style (terrain vs satellite)
 confidential <- FALSE   # strips lat/lon axis labels from map
 
-path_col <- "blue"
-tail_trace_col <- "skyblue"
+path_col <- "orangered"
+tail_trace_col <- "orange"
+
+# individual bird unique combo
+bird_id <- "OY"
+animate_migration <- TRUE
 
 
 # load movebank log details
@@ -64,7 +68,9 @@ source(file.path(codewd, "movebank_log.R"))
 mb_study_name <- searchMovebankStudies(x="Curlew Breckland", login=loginStored)
 mb_study_id <- getMovebankID(mb_study_name, login=loginStored)
 mb_study_animals <- getMovebankAnimals(study = mb_study_id, login=loginStored)
-mb_individual_id <- mb_study_animals[grep("LG", mb_study_animals$animalName), "local_identifier"]
+
+# select only a specific bird - comment out
+mb_individual_id <- mb_study_animals[grep(bird_id, mb_study_animals$animalName), "local_identifier"]
 
 # automatic Movebank download - doesn't work if tags are redployed
 all_tags <- getMovebankLocationData(
@@ -102,7 +108,9 @@ all_tags <- all_tags %>%
 # Choose dates -----------------
 
 
-first_date <- dmy("01-06-2022")
+# first_date <- dmy("15-06-2022")
+first_date <- dmy("16-07-2022")
+# last_date <- dmy("20-07-2022")
 last_date <- ymd(today_date)
 
 
@@ -110,11 +118,12 @@ last_date <- ymd(today_date)
 
 # fix rate controls downsampling of data, in minutes
 # Could set to 15 if you have high res data, but trade off in terms of long rendering time
-fix_rate <- 60
+fix_rate <- 120
 
 # filter movement data to site, cohort, post-release date times
 bird_df <- all_tags %>% 
-  filter(new_datetime >= strptime(paste(first_date, "09:00:00"), format = "%Y-%m-%d %H:%M:%S", tz="UTC"))
+  filter(new_datetime >= strptime(paste(first_date, "09:00:00"), format = "%Y-%m-%d %H:%M:%S", tz="UTC")) %>% 
+  filter(new_datetime <= strptime(paste(last_date, "09:00:00"), format = "%Y-%m-%d %H:%M:%S", tz="UTC") )
 
 # subset to only relevant columns needed to plot movements
 # filter to high satellite counts only (4+)
@@ -133,29 +142,45 @@ bird_df_move <- bird_df %>%
 m <- align_move(bird_df_move, res = fix_rate, unit = "mins")
 
 # set path colours
-path_colours <- "blue"
+path_colours <- path_col
+
+# set extent
+current_extent <- extent(m)
+
+if (animate_migration) {
+set_extent <- extent(current_extent[1] - 2,
+                     current_extent[2] + 2,
+                     current_extent[3] - 3, 
+                     current_extent[4] + 1)
+} else {
+  set_extent <- extent(current_extent[1] - 0.1,
+                       current_extent[2] + 0.1,
+                       current_extent[3] - 0.02, 
+                       current_extent[4] + 0.02)
+}
 
 # create spatial frames with a OpenStreetMap terrain map
 frames <- frames_spatial(m, path_colours = path_colours,
-                                  map_service = map_service, 
-                                  map_type = map_style,
-                                  map_token = ifelse(map_service == "mapbox", "pk.eyJ1Ijoic2ZyYW5rczgyIiwiYSI6ImNrcmZkb2QybDVla2wyb254Y2ptZnlqb3UifQ.YNOfGD1SeRMZJDur73Emyg", ""),
-                                  alpha = 0.5,
-                                  # equidistant = ifelse(site == "Ken Hill", TRUE, FALSE),
-                                  
-                                  path_legend = TRUE,
-
-                                  # tail_size = 1.2,
-                                  tail_length = 20 #,
-                                  # trace_show = TRUE,
-                                  # trace_colour = trace_colours
-                                  
+                         map_service = map_service, 
+                         map_type = map_style,
+                         map_token = ifelse(map_service == "mapbox", "pk.eyJ1Ijoic2ZyYW5rczgyIiwiYSI6ImNrcmZkb2QybDVla2wyb254Y2ptZnlqb3UifQ.YNOfGD1SeRMZJDur73Emyg", ""),
+                         alpha = 0.7,
+                         equidistant = FALSE,
+                         ext = set_extent,
+                         
+                         path_legend = FALSE,
+                         
+                         # tail_size = 1.2,
+                         tail_length = 20 ,
+                         # trace_show = TRUE,
+                         trace_colour = tail_trace_col
+                         
 ) %>%
   
   # add some customizations, such as axis labels
-  # add_labels(x = "Longitude", y = "Latitude") %>% 
+  add_labels(x = "Longitude", y = "Latitude") %>%
   # add_northarrow() %>%
-  # add_scalebar() %>%
+  add_scalebar(distance = ifelse(bird_id %in% "OY" & animate_migration, 500, 10)) %>%
   add_timestamps(m, type = "label") %>%
   add_progress() %>% 
   add_gg(gg = expr(list(
@@ -164,27 +189,28 @@ frames <- frames_spatial(m, path_colours = path_colours,
           axis.ticks = element_blank()
     ))))
 
-bto_logo <- png::readPNG(file.path(datawd, "C1-BTO-master-logo-portrait-(no-strap).png"))
-bto_rast <- grid::rasterGrob(bto_logo, interpolate=TRUE)
+# frames[[100]]
 
-frames <- add_gg(frames,
-                          gg = expr(list(
-                            annotation_custom(bto_rast,
-                                              xmin=max(m$x)+0.002, xmax= max(m$x) + 0.009,
-                                              ymin= max(m$y)-0.005, ymax= max(m$y) + 0.008)
-                          ))) %>% 
-  add_gg(gg = expr(list(
+# bto_logo <- png::readPNG(file.path(datawd, "C1-BTO-master-logo-portrait-(no-strap).png"))
+# bto_rast <- grid::rasterGrob(bto_logo, interpolate=TRUE)
+
+# frames <- add_gg(frames,
+#                  gg = expr(list(
+#                    annotation_custom(bto_rast,
+#                                      xmin=max(m$x)+0.002, xmax= max(m$x) + 0.009,
+#                                      ymin= max(m$y)-0.005, ymax= max(m$y) + 0.008)
+#                  ))) %>% 
+frames <-   add_gg(frames, gg = expr(list(
     labs(caption="\u00A9 Sam Franks / British Trust for Ornithology",
-         title = paste("Breckland Curlew", mb_individual_id))
-  )))
+         title = paste("Breckland Curlew 'Bowie'")))))
 
 
 # preview one of the frames, e.g. the 100th frame
 frames[[100]]
 
-animate_frames(frames, out_file = file.path(outputwd, paste0("Breckland_2022_", map_style, "_with-longer-tail_", today_date, ".", file_format)),
-               # overwrite = TRUE,
-               # fps = 10
+animate_frames(frames, out_file = file.path(outputwd, paste0("Breckland_2022_Bowie_Sado_", map_style, "_with-longer-tail_", today_date, ".", file_format)),
+               overwrite = TRUE,
+               fps = 25
 )
 
 #####################################################
