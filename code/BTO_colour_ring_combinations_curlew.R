@@ -1,4 +1,4 @@
-# Colour-ring requirements Brecks 2022
+# Colour-ring requirements spring 2023
 
 list_of_packages <- c("tidyverse")
 new_packages <- list_of_packages[!(list_of_packages %in% installed.packages()[,"Package"])]
@@ -24,7 +24,7 @@ colour_list[[1]] <- dt_sub %>%
   rename(colour = LA1)
 
 # LA2
-colour_list[[1]] <- dt_sub %>% 
+colour_list[[2]] <- dt_sub %>% 
   group_by(allocation, LA2) %>% 
   tally() %>% 
   rename(colour = LA2)
@@ -71,10 +71,26 @@ colour_list_order
 # Lime 2
 # Red 4
 
+# in_stock <- data.frame(
+#   colour = c("Y","W","G","N","B","O","L","R"),
+#   in_stock = c(24,14,20,8,6,14,2,4)
+# )
+
+# in stock from Brecks end 2022
+# Lime x2
+# Blue x6
+# Orange x14
+# Black x8
+# Red x4
+# Yellow x24
+# White x14
+# Green x20
+
 in_stock <- data.frame(
-  colour = c("Y","W","G","N","B","O","L","R"),
-  in_stock = c(24,14,20,8,6,14,2,4)
+  colour = c("Y","W","G","N","B","O","L","R","WT"),
+  in_stock = c(0,14,51,11,0,0,52,0,40)
 )
+
 
 colour_list_order <- merge(colour_list_order, in_stock, on = "colour", all.x = TRUE) %>% 
   mutate(in_stock = ifelse(is.na(in_stock), 0, in_stock)) %>% 
@@ -82,6 +98,8 @@ colour_list_order <- merge(colour_list_order, in_stock, on = "colour", all.x = T
   mutate(to_order = ifelse(to_order < 0, 0, to_order))
 
 colour_list_order
+
+write.csv(colour_list_order, file.path("BTO_curlew_colour_ring_order_Feb 2023_revised.csv"), row.names =TRUE)
 
   
   
